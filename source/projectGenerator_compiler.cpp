@@ -287,6 +287,10 @@ popd\n";
             } else if (error) {
                 outputError("Unknown error detected. See ffvs_log.txt for further details.", false);
             }
+        } else {
+            outputError("Could not read compilation error log (ffvs_log.txt)", false);
+            outputError("The compiler failed but error details are not available", false);
+            outputError("Check that the compiler batch file executed correctly and generated the error log", false);
         }
         // Remove the compile files
         deleteFile("ffvs_compile.bat");
