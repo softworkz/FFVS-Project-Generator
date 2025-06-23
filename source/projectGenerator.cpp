@@ -1002,11 +1002,11 @@ void ProjectGenerator::outputSourceFiles(string& projectTemplate, string& filter
     outputSourceFileType(m_includesRC, "ResourceCompile", "Resource", projectTemplate, filterTemplate, foundObjects,
         foundFilters, false, false, true);
 
-    // Output ASM files in specific item group (must go first as asm does not allow for custom obj filename)
+    // Output ASM files in specific item group
     if (!m_includesASM.empty()) {
         if (m_configHelper.isASMEnabled()) {
             outputSourceFileType(m_includesASM, (m_configHelper.m_useNASM) ? "NASM" : "YASM", "Source", projectTemplate,
-                filterTemplate, foundObjects, foundFilters, false);
+                filterTemplate, foundObjects, foundFilters, true);
         } else {
             outputError("Assembly files found in project but assembly is disabled");
         }
@@ -1416,14 +1416,14 @@ void ProjectGenerator::outputBuildEvents(string& projectTemplate) const
       <Command>";
     const string postbuildClose = "</Command>\r\n\
     </PostBuildEvent>";
-    const string include = "mkdir \"$(OutDir)\"\\include\r\n\
-mkdir \"$(OutDir)\"\\include\\";
+    const string include = "mkdir \"$(OutBaseDir)\"\\include\r\n\
+mkdir \"$(OutBaseDir)\"\\include\\";
     const string copy = "\r\ncopy ";
-    const string copyEnd = " \"$(OutDir)\"\\include\\";
-    const string license = "\r\nmkdir \"$(OutDir)\"\\licenses";
+    const string copyEnd = " \"$(OutBaseDir)\"\\include\\";
+    const string license = "\r\nmkdir \"$(OutBaseDir)\"\\licenses";
     string licenseName = m_configHelper.m_projectName;
-    transform(licenseName.begin(), licenseName.end(), licenseName.begin(), ::tolower);
-    const string licenseEnd = " \"$(OutDir)\"\\licenses\\" + licenseName + ".txt";
+    transform(licenseName.begin(), licenseName.end(), licenseName.begin(), tolower);
+    const string licenseEnd = " \"$(OutBaseDir)\"\\licenses\\" + licenseName + ".txt";
     const string prebuild = "\r\n    <PreBuildEvent>\r\n\
       <Command>if exist template_rootdirconfig.h (\r\n\
 del template_rootdirconfig.h\r\n\
@@ -1443,8 +1443,8 @@ del template_rootdirlibavutil\\avconfig.h\r\n\
 if exist template_rootdirlibavutil\\ffversion.h (\r\n\
 del template_rootdirlibavutil\\ffversion.h\r\n\
 )";
-    const string prebuildDir = "\r\nif exist \"$(OutDir)\"\\include\\" + m_projectName + " (\r\n\
-rd /s /q \"$(OutDir)\"\\include\\" +
+    const string prebuildDir = "\r\nif exist \"$(OutBaseDir)\"\\include\\" + m_projectName + " (\r\n\
+rd /s /q \"$(OutBaseDir)\"\\include\\" +
         m_projectName + "\r\n\
 cd ../\r\n\
 cd $(ProjectDir)\r\n\
