@@ -71,6 +71,7 @@ private:
     StaticList m_subDirs;
 
     map<string, StaticList> m_projectLibs;
+    bool m_addCustomTesseract{false};
 
     const string m_tempDirectory = "FFVSTemp/";
 

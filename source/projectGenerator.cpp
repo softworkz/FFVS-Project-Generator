@@ -2193,6 +2193,13 @@ bool ProjectGenerator::outputDependencyLibs(string& projectTemplate, const bool 
             addExternDeps[2] += "shaderc_sharedd.lib;";
             addExternDeps[3] += "shaderc_shared.lib;";
         }
+        // Add tesseract with custom name if specified via --tesseract-name
+        string addTesseractDebug, addTesseractRelease;
+        if (m_addCustomTesseract) {
+            m_addCustomTesseract = false;
+            addTesseractDebug = m_configHelper.m_tesseractName + "d.lib;";
+            addTesseractRelease = m_configHelper.m_tesseractName + ".lib;";
+        }
         // Add to Additional Dependencies
         const string libLink2[2] = {"<Link>", "<Lib>"};
         for (uint linkLib = 0; linkLib < (!program ? 2U : 1U); linkLib++) {
