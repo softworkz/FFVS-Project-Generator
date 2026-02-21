@@ -64,5 +64,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="bin2c.exe" />
+    <None Include="templates\smp_common.props" />
   </ItemGroup>
 </Project>

@@ -36,6 +36,7 @@
 #define TEMPLATE_FILE_PROPS_ID 110
 #define TEMPLATE_SLN_NOWINRT_ID 111
 #define BIN2C_EXE_ID 112
+#define TEMPLATE_COMMON_PROPS_ID 120
 
 bool ProjectGenerator::passAllMake()
 {
@@ -58,6 +59,16 @@ bool ProjectGenerator::passAllMake()
     }
     outPropsFile = m_configHelper.m_solutionDirectory + "smp_winrt_deps.props";
     if (!writeToFile(outPropsFile, propsFileWinRT, true)) {
+        return false;
+    }
+
+    // Copy common props file to output directory
+    string commonPropsFile;
+    if (!loadFromResourceFile(TEMPLATE_COMMON_PROPS_ID, commonPropsFile)) {
+        return false;
+    }
+    outPropsFile = m_configHelper.m_solutionDirectory + "smp_common.props";
+    if (!writeToFile(outPropsFile, commonPropsFile, true)) {
         return false;
     }
 
