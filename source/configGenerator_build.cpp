@@ -369,6 +369,8 @@ bool ConfigGenerator::buildAutoDetectValues()
                     enable = true;
                 } else if (i == "metal") {
                     enable = false;
+                } else if (i == "qsv") {
+                    enable = isConfigOptionEnabled("libmfx") || isConfigOptionEnabled("libvpl");
                 } else if (i == "nvdec") {
                     enable = (findFile(m_rootDirectory + "compat/cuda/dynlink_loader.h", sFileName) &&
                         findFile(m_rootDirectory + "compat/cuda/dynlink_cuda.h", sFileName));
@@ -721,10 +723,24 @@ void ConfigGenerator::buildReplaceValues(
         }
         opt = getConfigOptionPrefixed("CONFIG_LIBMFX");
         if ((opt != m_configValues.end()) && opt->m_value == "1") {
-            replaceValues["CONFIG_LIBMFX"] = "#if " + winrtDefine + "\n\
+            auto optVpl = getConfigOptionPrefixed("CONFIG_LIBVPL");
+            if ((optVpl != m_configValues.end()) && optVpl->m_value == "1") {
+                // libmfx was enabled internally to satisfy deps; output 0 since libvpl is the actual dispatcher
+                replaceValues["CONFIG_LIBMFX"] = "#define CONFIG_LIBMFX 0";
+            } else {
+                replaceValues["CONFIG_LIBMFX"] = "#if " + winrtDefine + "\n\
 #   define CONFIG_LIBMFX 1\n\
 #else\n\
 #   define CONFIG_LIBMFX 0\n\
+#endif";
+            }
+        }
+        opt = getConfigOptionPrefixed("CONFIG_LIBVPL");
+        if ((opt != m_configValues.end()) && opt->m_value == "1") {
+            replaceValues["CONFIG_LIBVPL"] = "#if " + winrtDefine + "\n\
+#   define CONFIG_LIBVPL 1\n\
+#else\n\
+#   define CONFIG_LIBVPL 0\n\
 #endif";
         }
         opt = getConfigOptionPrefixed("CONFIG_AMF");
@@ -1119,7 +1135,9 @@ void ConfigGenerator::buildAdditionalDependencies(DependencyList& additionalDepe
     if (!isConfigOptionValid("atomics_native")) {
         additionalDependencies["atomics_native"] = true;
     }
-    additionalDependencies["MFX_CODEC_VP9"] = isConfigOptionEnabled("libmfx");
+    const bool bQSV = isConfigOptionEnabled("libmfx") || isConfigOptionEnabled("libvpl");
+    additionalDependencies["MFX_CODEC_VP9"] = bQSV;
+    additionalDependencies["MFXLoad"] = isConfigOptionEnabled("libvpl");
     bool bNvenc = isConfigOptionEnabled("nvenc");
     additionalDependencies["NV_ENC_PIC_PARAMS_AV1"] = bNvenc;
     const auto spirv = getConfigOption("spirv_compiler");
@@ -1245,6 +1263,9 @@ void ConfigGenerator::buildForcedEnables(const string& optionLower, vector<strin
         CHECKFORCEDENABLES("cdio_paranoia_paranoia_h");
     } else if (optionLower == "libmfx") {
         CHECKFORCEDENABLES("qsv");
+    } else if (optionLower == "libvpl") {
+        CHECKFORCEDENABLES("qsv");
+        fastToggleConfigValue("libmfx", true); // libvpl satisfies libmfx deps for QSV components
     } else if (optionLower == "dcadec") {
         CHECKFORCEDENABLES("struct_dcadec_exss_info_matrix_encoding");
     } else if (optionLower == "sdl") {
