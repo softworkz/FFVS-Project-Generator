@@ -316,6 +316,9 @@ void ProjectGenerator::buildDependencyValues(StaticList& includeDirs, StaticList
             } else if (i.first == "libmfx") {
                 includeDirs.emplace_back("$(OutBaseDir)/include/mfx/");
                 includeDirs.emplace_back("$(ProjectDir)/../../prebuilt/include/mfx/");
+            } else if (i.first == "libvpl") {
+                includeDirs.emplace_back("$(OutBaseDir)/include/vpl/");
+                includeDirs.emplace_back("$(ProjectDir)/../../prebuilt/include/vpl/");
             } else if (i.first == "sdl2" || ((i.first == "sdl") && !m_configHelper.isConfigOptionValid("sdl2"))) {
                 includeDirs.emplace_back("$(OutBaseDir)/include/SDL/");
                 includeDirs.emplace_back("$(ProjectDir)/../../prebuilt/include/SDL/");
@@ -476,6 +479,11 @@ void ProjectGenerator::buildProjectDependencies(map<string, bool>& projectDeps) 
         ((m_projectName == "libavfilter") &&
             (findSourceFile("vf_deinterlace_qsv", ".c", notUsed) || findSourceFile("vf_stack_qsv", ".c", notUsed))) ||
         (m_projectName == "ffmpeg") || (m_projectName == "avconv");
+    projectDeps["libvpl"] = ((m_projectName == "libavutil") && findSourceFile("hwcontext_qsv", ".h", notUsed)) ||
+        (m_projectName == "libavcodec") ||
+        ((m_projectName == "libavfilter") &&
+            (findSourceFile("vf_deinterlace_qsv", ".c", notUsed) || findSourceFile("vf_stack_qsv", ".c", notUsed))) ||
+        (m_projectName == "ffmpeg") || (m_projectName == "avconv");
     projectDeps["libmodplug"] = (m_projectName == "libavformat");
     projectDeps["libmp3lame"] = (m_projectName == "libavcodec");
     projectDeps["libnpp"] = (m_projectName == "libavfilter");
@@ -546,7 +554,8 @@ void ProjectGenerator::buildProjectDependencies(map<string, bool>& projectDeps) 
     projectDeps["sdl2"] =
         (m_projectName == "libavdevice") || (m_projectName == "ffplay") || (m_projectName == "avplay");
     projectDeps["vapoursynth"] = m_projectName == "libavformat";
-    projectDeps["vulkan"] = (m_projectName == "libavcodec") || (m_projectName == "libavutil");
+    projectDeps["vulkan"] = (m_projectName == "libavcodec") || (m_projectName == "libavutil") ||
+        (m_projectName == "libavfilter");
     projectDeps["zlib"] = (m_projectName == "libavformat") || (m_projectName == "libavcodec");
 }
 
