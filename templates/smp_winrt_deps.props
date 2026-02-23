@@ -128,52 +128,42 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugWinRT|Win32'">
     <GeneratedFilesDir>$(ProjectDir)obj\Generated</GeneratedFilesDir>
-    <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
     <MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugWinRT|x64'">
     <GeneratedFilesDir>$(ProjectDir)obj\Generated</GeneratedFilesDir>
-    <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
     <MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLWinRT|Win32'">
     <GeneratedFilesDir>$(ProjectDir)obj\Generated</GeneratedFilesDir>
-    <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
     <MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLLWinRT|x64'">
     <GeneratedFilesDir>$(ProjectDir)obj\Generated</GeneratedFilesDir>
-    <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
     <MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWinRT|Win32'">
     <GeneratedFilesDir>$(ProjectDir)obj\Generated</GeneratedFilesDir>
-    <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
     <MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWinRT|x64'">
     <GeneratedFilesDir>$(ProjectDir)obj\Generated</GeneratedFilesDir>
-    <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
     <MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLWinRT|Win32'">
     <GeneratedFilesDir>$(ProjectDir)obj\Generated</GeneratedFilesDir>
-    <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
     <MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLWinRT|x64'">
     <GeneratedFilesDir>$(ProjectDir)obj\Generated</GeneratedFilesDir>
-    <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
     <MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLWinRTStaticDeps|Win32'">
     <GeneratedFilesDir>$(ProjectDir)obj\Generated</GeneratedFilesDir>
-    <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
     <MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLLWinRTStaticDeps|x64'">
     <GeneratedFilesDir>$(ProjectDir)obj\Generated</GeneratedFilesDir>
-    <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
     <MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugWinRT|Win32'">
