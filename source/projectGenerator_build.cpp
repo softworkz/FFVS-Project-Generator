@@ -73,6 +73,10 @@ void ProjectGenerator::buildDependencies(StaticList& libs, StaticList& addLibs, 
     if (m_projectName == "libavformat" && !winrt) {
         addLibs.emplace_back("ws2_32"); // Add the additional required libs
     }
+    // libplacebo statically links into libavfilter which requires vulkan-1 at link time
+    if (m_configHelper.isConfigOptionEnabled("libplacebo") && !winrt) {
+        addLibs.emplace_back("vulkan-1");
+    }
 
     // Determine only those dependencies that are valid for current project
     map<string, bool> projectDeps;
@@ -291,6 +295,21 @@ void ProjectGenerator::buildDependencyValues(StaticList& includeDirs, StaticList
         includeDirs.push_back(projRoot + m_projectName + '/');
     }
 
+    // libplacebo requires Vulkan SDK include and lib dirs for all projects that link against it
+    if (m_configHelper.isConfigOptionEnabled("libplacebo") && !winrt) {
+        definesStatic.emplace_back("PL_STATIC");
+        definesShared.emplace_back("PL_STATIC");
+        if (findEnvironmentVariable("VULKAN_SDK")) {
+            if (find(includeDirs.begin(), includeDirs.end(), "$(VULKAN_SDK)/include/") == includeDirs.end()) {
+                includeDirs.emplace_back("$(VULKAN_SDK)/include/");
+            }
+            if (find(lib32Dirs.begin(), lib32Dirs.end(), "$(VULKAN_SDK)/Lib32") == lib32Dirs.end()) {
+                lib32Dirs.emplace_back("$(VULKAN_SDK)/Lib32");
+                lib64Dirs.emplace_back("$(VULKAN_SDK)/Lib");
+            }
+        }
+    }
+
     // Determine only those dependencies that are valid for current project
     map<string, bool> projectDeps;
     buildProjectDependencies(projectDeps);
@@ -437,8 +456,12 @@ void ProjectGenerator::buildDependencyValues(StaticList& includeDirs, StaticList
                     outputWarning("libshaderc requires the Vulkan SDK to be installed.", false);
                 }
             } else if (i.first == "libplacebo" && !winrt) {
-                includeDirs.emplace_back("$(OutBaseDir)/include/libplacebo/");
-                includeDirs.emplace_back("$(ProjectDir)/../../prebuilt/include/libplacebo/");
+                includeDirs.emplace_back("$(OutBaseDir)/include/");
+                includeDirs.emplace_back("$(ProjectDir)/../../prebuilt/include/");
+                if (findEnvironmentVariable("VULKAN_SDK")) {
+                    lib32Dirs.emplace_back("$(VULKAN_SDK)/Lib32");
+                    lib64Dirs.emplace_back("$(VULKAN_SDK)/Lib");
+                }
             }
         }
     }

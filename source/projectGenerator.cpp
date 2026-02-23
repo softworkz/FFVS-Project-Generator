@@ -222,6 +222,75 @@ void ProjectGenerator::errorFunc(const bool cleanupFiles)
     exit(1);
 }
 
+void ProjectGenerator::sanitizeSourceFiles()
+{
+    if (!m_configHelper.isConfigOptionEnabled("libplacebo")) {
+        return;
+    }
+    for (const auto& file : m_includesC) {
+        if (file.find("vf_libplacebo.c") == string::npos) {
+            continue;
+        }
+        string fullPath = file;
+        m_configHelper.makeFileGeneratorRelative(fullPath, fullPath);
+        string contents;
+        if (!loadFromFile(fullPath, contents, false, false)) {
+            continue;
+        }
+        if (contents.find("#if PL_API_VER") == string::npos) {
+            continue;
+        }
+        // Split into lines
+        vector<string> lines;
+        size_t pos = 0;
+        while (pos < contents.size()) {
+            size_t eol = contents.find('\n', pos);
+            if (eol == string::npos) eol = contents.size();
+            lines.push_back(contents.substr(pos, eol - pos));
+            pos = eol + 1;
+        }
+        // Track parenthesis nesting; comment out #if PL_API_VER / #endif inside macro args
+        int parenDepth = 0;
+        int skipEndifCount = 0;
+        bool modified = false;
+        for (auto& line : lines) {
+            string trimmed = line;
+            size_t firstNonWS = trimmed.find_first_not_of(" \t\r");
+            if (firstNonWS != string::npos) trimmed = trimmed.substr(firstNonWS);
+            if (parenDepth > 0 && trimmed.find("#if PL_API_VER") == 0 &&
+                line.find("////") == string::npos) {
+                line = "////" + line;
+                skipEndifCount++;
+                modified = true;
+            } else if (skipEndifCount > 0 && (trimmed == "#endif" || trimmed == "#endif\r") &&
+                line.find("////") == string::npos) {
+                line = "////" + line;
+                skipEndifCount--;
+                modified = true;
+            } else {
+                if (trimmed.empty() || trimmed[0] != '#') {
+                    bool inString = false;
+                    for (char c : line) {
+                        if (c == '"') inString = !inString;
+                        if (!inString) {
+                            if (c == '(') parenDepth++;
+                            else if (c == ')') parenDepth--;
+                        }
+                    }
+                }
+            }
+        }
+        if (modified) {
+            string result;
+            for (size_t i = 0; i < lines.size(); i++) {
+                result += lines[i];
+                if (i + 1 < lines.size()) result += '\n';
+            }
+            writeToFile(fullPath, result);
+        }
+    }
+}
+
 bool ProjectGenerator::outputProject()
 {
     // Check all files are correctly located
@@ -236,6 +305,9 @@ bool ProjectGenerator::outputProject()
     StaticList definesShared;
     StaticList definesStatic;
     buildDependencyValues(includeDirs, lib32Dirs, lib64Dirs, definesShared, definesStatic, false);
+
+    // Comment out #if/#endif inside macro arguments that MSVC cannot handle
+    sanitizeSourceFiles();
 
     // Create missing definitions of functions removed by DCE
     if (!outputProjectDCE(includeDirs)) {

@@ -434,6 +434,11 @@ private:
         bool program = false);
 
     /**
+     * Comment out preprocessor directives inside macro arguments that MSVC cannot handle.
+     */
+    void sanitizeSourceFiles();
+
+    /**
      * Output asm tools to project template.
      * @remark Either yasm or nasm tools will be used based on current configuration.
      * @param [in,out] projectTemplate The project template.
