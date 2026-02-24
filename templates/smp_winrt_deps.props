@@ -45,7 +45,7 @@
   <PropertyGroup>
     <OutBaseDir>$(ProjectDir)..\..\..\msvc\</OutBaseDir>
     <OutDir>$(OutBaseDir)bin\$(Platform)\</OutDir>
-    <IntDir>$(ProjectDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir>$(ProjectDir)obj\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</IntDir>
     <TargetName>$(RootNamespace)_winrt</TargetName>
     <TargetName Condition="'$(Configuration)'=='DebugWinRT'">lib$(RootNamespace)d_winrt</TargetName>
     <TargetName Condition="'$(Configuration)'=='DebugDLLWinRT'">$(RootNamespace)d_winrt</TargetName>

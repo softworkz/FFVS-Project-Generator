@@ -45,7 +45,7 @@
   <PropertyGroup>
     <OutBaseDir>$(ProjectDir)..\..\..\msvc\</OutBaseDir>
     <OutDir>$(OutBaseDir)bin\$(Platform)\</OutDir>
-    <IntDir>$(ProjectDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir>$(ProjectDir)obj\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</IntDir>
     <TargetName>$(RootNamespace)</TargetName>
     <TargetName Condition="'$(Configuration)'=='Debug'">lib$(RootNamespace)d</TargetName>
     <TargetName Condition="'$(Configuration)'=='DebugDLL'">$(RootNamespace)d</TargetName>
