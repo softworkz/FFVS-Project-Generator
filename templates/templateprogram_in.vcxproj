@@ -37,7 +37,7 @@
   <PropertyGroup>
     <OutBaseDir>template_outdir</OutBaseDir>
     <OutDir>$(OutBaseDir)bin\$(Platform)\</OutDir>
-    <IntDir>$(ProjectDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir>$(ProjectDir)obj\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</IntDir>
     <TargetName>template_in</TargetName>
     <TargetName Condition="'$(Configuration)'=='Debug'">template_ind</TargetName>
     <TargetName Condition="'$(Configuration)'=='DebugDLL'">template_ind</TargetName>
