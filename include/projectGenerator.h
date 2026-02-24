@@ -446,6 +446,22 @@ private:
     void outputCUDATools(string& projectTemplate) const;
 
     /**
+     * Output OpenCL source2c build customization to project template.
+     * @remark Copies source2c.exe and opencl_source2c .props/.targets/.xml to the output directory
+     *         and adds the ExtensionSettings/ExtensionTargets import groups.
+     * @param [in,out] projectTemplate The project template.
+     */
+    void outputOpenCLTools(string& projectTemplate) const;
+
+    /**
+     * Output SPIRV source2c build customization to project template.
+     * @remark Copies source2c.exe and spirv_source2c .props/.targets/.xml to the output directory
+     *         and adds the ExtensionSettings/ExtensionTargets import groups.
+     * @param [in,out] projectTemplate The project template.
+     */
+    void outputSPIRVTools(string& projectTemplate) const;
+
+    /**
      * Output resource source files (HTML/CSS) with custom build steps.
      * @param [in,out] fileList         The list of resource files to process.
      * @param [in,out] projectTemplate  The project template.

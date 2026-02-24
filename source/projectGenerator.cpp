@@ -36,7 +36,17 @@
 #define TEMPLATE_FILE_PROPS_ID 110
 #define TEMPLATE_SLN_NOWINRT_ID 111
 #define BIN2C_EXE_ID 112
+#define SOURCE2C_EXE_ID 113
+#define OPENCL_SOURCE2C_PROPS_ID 114
+#define OPENCL_SOURCE2C_TARGETS_ID 115
+#define OPENCL_SOURCE2C_XML_ID 116
+#define CUDA_BIN2C_PROPS_ID 117
+#define CUDA_BIN2C_TARGETS_ID 118
+#define CUDA_BIN2C_XML_ID 119
 #define TEMPLATE_COMMON_PROPS_ID 120
+#define SPIRV_SOURCE2C_PROPS_ID 121
+#define SPIRV_SOURCE2C_TARGETS_ID 122
+#define SPIRV_SOURCE2C_XML_ID 123
 
 bool ProjectGenerator::passAllMake()
 {
@@ -287,6 +297,14 @@ bool ProjectGenerator::outputProject()
     outputCUDATools(projectFile);
     outputCUDATools(projectFileWinRT);
 
+    // Add OpenCL requirements
+    outputOpenCLTools(projectFile);
+    outputOpenCLTools(projectFileWinRT);
+
+    // Add SPIRV requirements
+    outputSPIRVTools(projectFile);
+    outputSPIRVTools(projectFileWinRT);
+
     // Add the dependency libraries
     if (!outputDependencyLibs(projectFile, false, false)) {
         return false;
@@ -388,6 +406,12 @@ bool ProjectGenerator::outputProgramProject(const string& destinationFile, const
 
     // Add CUDA requirements
     outputCUDATools(programFile);
+
+    // Add OpenCL requirements
+    outputOpenCLTools(programFile);
+
+    // Add SPIRV requirements
+    outputSPIRVTools(programFile);
 
     // Add the dependency libraries
     if (!outputDependencyLibs(programFile, false, true)) {
@@ -1061,16 +1085,16 @@ void ProjectGenerator::outputSourceFiles(string& projectTemplate, string& filter
     // Output CUDA files
     if (!m_includesCU.empty()) {
         if (m_configHelper.isCUDAEnabled()) {
-            // outputSourceFileType(
-            //    m_includesCU, "CudaCompile", "Source", projectTemplate, filterTemplate, foundObjects, foundFilters,
-            //    true);
-            /*for (auto& i : m_includesConditionalCU) {
+            outputSourceFileType(
+                m_includesCU, "CudaBin2C", "Source", projectTemplate, filterTemplate, foundObjects, foundFilters,
+                false);
+            for (auto& i : m_includesConditionalCU) {
                 fileList.clear();
                 fileList.emplace_back(i.first);
-                outputSourceFileType(fileList, "CudaCompile", "Source", projectTemplate, filterTemplate, foundObjects,
-                    foundFilters, true, i.second.isStatic, i.second.isShared, i.second.is32, i.second.is64);
-            }*/
-            outputError("CUDA files detected in project. CUDA compilation is not currently supported");
+                outputSourceFileType(fileList, "CudaBin2C", "Source", projectTemplate, filterTemplate,
+                    foundObjects, foundFilters, false, i.second.isStatic, i.second.isShared, i.second.is32,
+                    i.second.is64);
+            }
         } else {
             outputError("CUDA files found in project but CUDA is disabled");
         }
@@ -1079,9 +1103,16 @@ void ProjectGenerator::outputSourceFiles(string& projectTemplate, string& filter
     // Output CL files
     if (!m_includesCL.empty()) {
         if (m_configHelper.isOpenCLEnabled()) {
-            // TODO: Embed source file as c file (ffmpeg uses tools/source2c for this)
-            outputError(
-                "OpenCL shader files detected in project. OpenCL shader compilation is not currently supported");
+            outputSourceFileType(
+                m_includesCL, "OpenCLSource2C", "Source", projectTemplate, filterTemplate, foundObjects, foundFilters,
+                false);
+            for (auto& i : m_includesConditionalCL) {
+                fileList.clear();
+                fileList.emplace_back(i.first);
+                outputSourceFileType(fileList, "OpenCLSource2C", "Source", projectTemplate, filterTemplate,
+                    foundObjects, foundFilters, false, i.second.isStatic, i.second.isShared, i.second.is32,
+                    i.second.is64);
+            }
         } else {
             outputError("OpenCL shader files found in project but opencl is disabled");
         }
@@ -1090,8 +1121,16 @@ void ProjectGenerator::outputSourceFiles(string& projectTemplate, string& filter
     // Output COMP files
     if (!m_includesCOMP.empty()) {
         if (m_configHelper.isSPIRVEnabled()) {
-            // TODO: Embed source file as c file (ffmpeg uses tools/source2c for this)
-            outputError("SPIRV shader files detected in project. Compute shader compilation is not currently supported");
+            outputSourceFileType(
+                m_includesCOMP, "SPIRVSource2C", "Source", projectTemplate, filterTemplate, foundObjects, foundFilters,
+                false);
+            for (auto& i : m_includesConditionalCOMP) {
+                fileList.clear();
+                fileList.emplace_back(i.first);
+                outputSourceFileType(fileList, "SPIRVSource2C", "Source", projectTemplate, filterTemplate,
+                    foundObjects, foundFilters, false, i.second.isStatic, i.second.isShared, i.second.is32,
+                    i.second.is64);
+            }
         } else {
             outputError("SPIRV shader files found in project but spirv is disabled");
         }
@@ -1677,7 +1716,7 @@ void ProjectGenerator::outputASMTools(string& projectTemplate) const
     }
 }
 
-void ProjectGenerator::outputResourceSourceFiles(StaticList& fileList, string& projectTemplate, string& filterTemplate, 
+void ProjectGenerator::outputResourceSourceFiles(StaticList& fileList, string& projectTemplate, string& filterTemplate,
     StaticList& foundObjects, set<string>& foundFilters, bool staticOnly, bool sharedOnly, bool bit32Only, bool bit64Only) const
 {
     // Constants for resource build
@@ -1877,7 +1916,222 @@ void ProjectGenerator::outputResourceSourceFiles(StaticList& fileList, string& p
 void ProjectGenerator::outputCUDATools(string& projectTemplate) const
 {
     if (m_configHelper.isCUDAEnabled() && (m_includesCU.size() > 0)) {
-        // TODO: Add cuda tools
+        // Copy bin2c.exe to project directory for CUDA compilation
+        string bin2cContent;
+        if (!loadFromResourceFile(BIN2C_EXE_ID, bin2cContent)) {
+            outputError("Failed to load bin2c.exe from resources");
+            return;
+        }
+        string bin2cPath = m_configHelper.m_solutionDirectory + "bin2c.exe";
+        if (!writeToFile(bin2cPath, bin2cContent, true)) {
+            outputError("Failed to copy bin2c.exe to project directory");
+            return;
+        }
+
+        // Copy cuda_bin2c.props to project directory
+        string propsContent;
+        if (!loadFromResourceFile(CUDA_BIN2C_PROPS_ID, propsContent)) {
+            outputError("Failed to load cuda_bin2c.props from resources");
+            return;
+        }
+        string propsPath = m_configHelper.m_solutionDirectory + "cuda_bin2c.props";
+        if (!writeToFile(propsPath, propsContent, true)) {
+            outputError("Failed to copy cuda_bin2c.props to project directory");
+            return;
+        }
+
+        // Copy cuda_bin2c.targets to project directory
+        string targetsContent;
+        if (!loadFromResourceFile(CUDA_BIN2C_TARGETS_ID, targetsContent)) {
+            outputError("Failed to load cuda_bin2c.targets from resources");
+            return;
+        }
+        string targetsPath = m_configHelper.m_solutionDirectory + "cuda_bin2c.targets";
+        if (!writeToFile(targetsPath, targetsContent, true)) {
+            outputError("Failed to copy cuda_bin2c.targets to project directory");
+            return;
+        }
+
+        // Copy cuda_bin2c.xml to project directory
+        string xmlContent;
+        if (!loadFromResourceFile(CUDA_BIN2C_XML_ID, xmlContent)) {
+            outputError("Failed to load cuda_bin2c.xml from resources");
+            return;
+        }
+        string xmlPath = m_configHelper.m_solutionDirectory + "cuda_bin2c.xml";
+        if (!writeToFile(xmlPath, xmlContent, true)) {
+            outputError("Failed to copy cuda_bin2c.xml to project directory");
+            return;
+        }
+
+        // Add CUDA build customisation imports
+        string propsCUDA = "\r\n\
+  <ImportGroup Label=\"ExtensionSettings\">\r\n\
+    <Import Project=\"cuda_bin2c.props\" />\r\n\
+  </ImportGroup>";
+        string targetsCUDA = "\r\n\
+  <ImportGroup Label=\"ExtensionTargets\">\r\n\
+    <Import Project=\"cuda_bin2c.targets\" />\r\n\
+  </ImportGroup>";
+
+        const string findProps = R"(</ImportGroup>)";
+        const string findTargets = R"(</ItemDefinitionGroup>)";
+
+        // Add cuda props import (after first </ImportGroup>)
+        uint findPos = projectTemplate.find(findProps) + findProps.length();
+        projectTemplate.insert(findPos, propsCUDA);
+        // Add cuda targets import (after last </ItemDefinitionGroup>)
+        findPos = projectTemplate.rfind(findTargets) + findTargets.length();
+        projectTemplate.insert(findPos, targetsCUDA);
+    }
+}
+
+void ProjectGenerator::outputOpenCLTools(string& projectTemplate) const
+{
+    if (m_configHelper.isOpenCLEnabled() && (m_includesCL.size() > 0)) {
+        // Copy source2c.exe to project directory
+        string source2cContent;
+        if (!loadFromResourceFile(SOURCE2C_EXE_ID, source2cContent)) {
+            outputError("Failed to load source2c.exe from resources");
+            return;
+        }
+        string source2cPath = m_configHelper.m_solutionDirectory + "source2c.exe";
+        if (!writeToFile(source2cPath, source2cContent, true)) {
+            outputError("Failed to copy source2c.exe to project directory");
+            return;
+        }
+
+        // Copy opencl_source2c.props to project directory
+        string propsContent;
+        if (!loadFromResourceFile(OPENCL_SOURCE2C_PROPS_ID, propsContent)) {
+            outputError("Failed to load opencl_source2c.props from resources");
+            return;
+        }
+        string propsPath = m_configHelper.m_solutionDirectory + "opencl_source2c.props";
+        if (!writeToFile(propsPath, propsContent, true)) {
+            outputError("Failed to copy opencl_source2c.props to project directory");
+            return;
+        }
+
+        // Copy opencl_source2c.targets to project directory
+        string targetsContent;
+        if (!loadFromResourceFile(OPENCL_SOURCE2C_TARGETS_ID, targetsContent)) {
+            outputError("Failed to load opencl_source2c.targets from resources");
+            return;
+        }
+        string targetsPath = m_configHelper.m_solutionDirectory + "opencl_source2c.targets";
+        if (!writeToFile(targetsPath, targetsContent, true)) {
+            outputError("Failed to copy opencl_source2c.targets to project directory");
+            return;
+        }
+
+        // Copy opencl_source2c.xml to project directory
+        string xmlContent;
+        if (!loadFromResourceFile(OPENCL_SOURCE2C_XML_ID, xmlContent)) {
+            outputError("Failed to load opencl_source2c.xml from resources");
+            return;
+        }
+        string xmlPath = m_configHelper.m_solutionDirectory + "opencl_source2c.xml";
+        if (!writeToFile(xmlPath, xmlContent, true)) {
+            outputError("Failed to copy opencl_source2c.xml to project directory");
+            return;
+        }
+
+        // Add OpenCL build customisation imports
+        string propsOpenCL = "\r\n\
+  <ImportGroup Label=\"ExtensionSettings\">\r\n\
+    <Import Project=\"opencl_source2c.props\" />\r\n\
+  </ImportGroup>";
+        string targetsOpenCL = "\r\n\
+  <ImportGroup Label=\"ExtensionTargets\">\r\n\
+    <Import Project=\"opencl_source2c.targets\" />\r\n\
+  </ImportGroup>";
+
+        const string findProps = R"(</ImportGroup>)";
+        const string findTargets = R"(</ItemDefinitionGroup>)";
+
+        // Add opencl props import (after first </ImportGroup>)
+        uint findPos = projectTemplate.find(findProps) + findProps.length();
+        projectTemplate.insert(findPos, propsOpenCL);
+        // Add opencl targets import (after last </ItemDefinitionGroup>)
+        findPos = projectTemplate.rfind(findTargets) + findTargets.length();
+        projectTemplate.insert(findPos, targetsOpenCL);
+    }
+}
+
+void ProjectGenerator::outputSPIRVTools(string& projectTemplate) const
+{
+    if (m_configHelper.isSPIRVEnabled() && (m_includesCOMP.size() > 0)) {
+        // Copy source2c.exe to project directory (may already exist from OpenCL)
+        string source2cPath = m_configHelper.m_solutionDirectory + "source2c.exe";
+        string source2cCheck;
+        if (!findFile(source2cPath, source2cCheck)) {
+            string source2cContent;
+            if (!loadFromResourceFile(SOURCE2C_EXE_ID, source2cContent)) {
+                outputError("Failed to load source2c.exe from resources");
+                return;
+            }
+            if (!writeToFile(source2cPath, source2cContent, true)) {
+                outputError("Failed to copy source2c.exe to project directory");
+                return;
+            }
+        }
+
+        // Copy spirv_source2c.props to project directory
+        string propsContent;
+        if (!loadFromResourceFile(SPIRV_SOURCE2C_PROPS_ID, propsContent)) {
+            outputError("Failed to load spirv_source2c.props from resources");
+            return;
+        }
+        string propsPath = m_configHelper.m_solutionDirectory + "spirv_source2c.props";
+        if (!writeToFile(propsPath, propsContent, true)) {
+            outputError("Failed to copy spirv_source2c.props to project directory");
+            return;
+        }
+
+        // Copy spirv_source2c.targets to project directory
+        string targetsContent;
+        if (!loadFromResourceFile(SPIRV_SOURCE2C_TARGETS_ID, targetsContent)) {
+            outputError("Failed to load spirv_source2c.targets from resources");
+            return;
+        }
+        string targetsPath = m_configHelper.m_solutionDirectory + "spirv_source2c.targets";
+        if (!writeToFile(targetsPath, targetsContent, true)) {
+            outputError("Failed to copy spirv_source2c.targets to project directory");
+            return;
+        }
+
+        // Copy spirv_source2c.xml to project directory
+        string xmlContent;
+        if (!loadFromResourceFile(SPIRV_SOURCE2C_XML_ID, xmlContent)) {
+            outputError("Failed to load spirv_source2c.xml from resources");
+            return;
+        }
+        string xmlPath = m_configHelper.m_solutionDirectory + "spirv_source2c.xml";
+        if (!writeToFile(xmlPath, xmlContent, true)) {
+            outputError("Failed to copy spirv_source2c.xml to project directory");
+            return;
+        }
+
+        // Add SPIRV build customisation imports
+        string propsSPIRV = "\r\n\
+  <ImportGroup Label=\"ExtensionSettings\">\r\n\
+    <Import Project=\"spirv_source2c.props\" />\r\n\
+  </ImportGroup>";
+        string targetsSPIRV = "\r\n\
+  <ImportGroup Label=\"ExtensionTargets\">\r\n\
+    <Import Project=\"spirv_source2c.targets\" />\r\n\
+  </ImportGroup>";
+
+        const string findProps = R"(</ImportGroup>)";
+        const string findTargets = R"(</ItemDefinitionGroup>)";
+
+        // Add spirv props import (after first </ImportGroup>)
+        uint findPos = projectTemplate.find(findProps) + findProps.length();
+        projectTemplate.insert(findPos, propsSPIRV);
+        // Add spirv targets import (after last </ItemDefinitionGroup>)
+        findPos = projectTemplate.rfind(findTargets) + findTargets.length();
+        projectTemplate.insert(findPos, targetsSPIRV);
     }
 }
 
@@ -1897,7 +2151,7 @@ bool ProjectGenerator::outputDependencyLibs(string& projectTemplate, const bool 
     StaticList addLibs, libs = m_libs;
     buildDependencies(libs, addLibs, winrt);
 
-    if ((libs.size() > 0) || (addLibs.size() > 0)) {
+    if ((libs.size() > 0) || (addLibs.size() > 0) || m_configHelper.isConfigOptionEnabled("libshaderc")) {
         // Create list of additional ffmpeg dependencies
         string addFFmpegLibs[4]; // debug, release, debugDll, releaseDll
         for (const auto& i : m_projectLibs[m_projectName]) {
@@ -1923,10 +2177,21 @@ bool ProjectGenerator::outputDependencyLibs(string& projectTemplate, const bool 
             addDeps[3] += (!winrt) ? ".lib;" : "_winrt.lib;";
         }
         // Create List of additional external dependencies
-        string addExternDeps;
+        // Uses same 4-way split as addDeps: debug, release, debugDll, releaseDll
+        string addExternDeps[4];
         for (const auto& i : addLibs) {
-            addExternDeps += i;
-            addExternDeps += ".lib;";
+            addExternDeps[0] += i + ".lib;";
+            addExternDeps[1] += i + ".lib;";
+            addExternDeps[2] += i + ".lib;";
+            addExternDeps[3] += i + ".lib;";
+        }
+        // Vulkan SDK libs with separate static/DLL names and debug variants
+        if (m_configHelper.isConfigOptionEnabled("libshaderc") &&
+            (m_projectName == "libavfilter")) {
+            addExternDeps[0] += "shaderc_combinedd.lib;";
+            addExternDeps[1] += "shaderc_combined.lib;";
+            addExternDeps[2] += "shaderc_sharedd.lib;";
+            addExternDeps[3] += "shaderc_shared.lib;";
         }
         // Add to Additional Dependencies
         const string libLink2[2] = {"<Link>", "<Lib>"};
@@ -1977,7 +2242,8 @@ bool ProjectGenerator::outputDependencyLibs(string& projectTemplate, const bool 
                             addIndex += 2;
                         }
                         addString += addDeps[addIndex];
-                        addString += addExternDeps;
+                        addString += addExternDeps[addIndex];
+                        addString += (debugRelease == 0) ? addTesseractDebug : addTesseractRelease;
                         addString += "%(AdditionalDependencies)</AdditionalDependencies>";
                         projectTemplate.insert(findPos, addString);
                         findPos += addString.length();
