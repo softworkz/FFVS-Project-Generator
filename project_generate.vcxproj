@@ -45,6 +45,8 @@
     <None Include="resources\opencl_source2c.props" />
     <None Include="resources\opencl_source2c.targets" />
     <None Include="resources\source2c.exe" />
+    <None Include="resources\spirv_compile.props" />
+    <None Include="resources\spirv_compile.targets" />
     <None Include="resources\spirv_source2c.props" />
     <None Include="resources\spirv_source2c.targets" />
     <None Include="templates\smp_common.props" />
@@ -63,6 +65,7 @@
   <ItemGroup>
     <Xml Include="resources\cuda_bin2c.xml" />
     <Xml Include="resources\opencl_source2c.xml" />
+    <Xml Include="resources\spirv_compile.xml" />
     <Xml Include="resources\spirv_source2c.xml" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

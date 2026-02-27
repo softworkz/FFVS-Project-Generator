@@ -58,11 +58,13 @@ private:
     ConditionalList m_includesConditionalCU;
     ConditionalList m_includesConditionalCL;
     ConditionalList m_includesConditionalCOMP;
+    ConditionalList m_includesConditionalSPV;
     StaticList m_includesH;
     StaticList m_includesRC;
     StaticList m_includesCU;
     StaticList m_includesCL;
     StaticList m_includesCOMP;
+    StaticList m_includesSPV;
     UnknownList m_replaceIncludes;
     StaticList m_libs;
     UnknownList m_unknowns;
@@ -335,7 +337,7 @@ private:
 
     bool findProjectFiles(const StaticList& includes, StaticList& includesC, StaticList& includesCPP,
         StaticList& includesASM, StaticList& includesH, StaticList& includesRC, StaticList& includesCU,
-        StaticList& includesCL, StaticList& includesCOMP) const;
+        StaticList& includesCL, StaticList& includesCOMP, StaticList& includesSPV) const;
 
     /**
      * Replace occurrences of known tags in string.
@@ -466,6 +468,14 @@ private:
      * @param [in,out] projectTemplate The project template.
      */
     void outputSPIRVTools(string& projectTemplate) const;
+
+    /**
+     * Outputs compile-time SPIR-V build tools into the project file.
+     * @remark Copies bin2c.exe and spirv_compile .props/.targets/.xml to the output directory
+     *         and adds the ExtensionSettings/ExtensionTargets import groups.
+     * @param [in,out] projectTemplate The project template.
+     */
+    void outputSPIRVCompileTools(string& projectTemplate) const;
 
     /**
      * Output resource source files (HTML/CSS) with custom build steps.

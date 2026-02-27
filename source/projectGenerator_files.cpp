@@ -107,7 +107,7 @@ bool ProjectGenerator::checkProjectFiles()
 
     // Check the output Unknown Includes and find there corresponding file
     if (!findProjectFiles(m_includes, m_includesC, m_includesCPP, m_includesASM, m_includesH, m_includesRC,
-            m_includesCU, m_includesCL, m_includesCOMP)) {
+            m_includesCU, m_includesCL, m_includesCOMP, m_includesSPV)) {
         return false;
     }
 
@@ -118,12 +118,12 @@ bool ProjectGenerator::checkProjectFiles()
 
     // Check all source files associated with replaced config values
     StaticList replaceIncludes, replaceCPPIncludes, replaceCIncludes, replaceASMIncludes, replaceCUIncludes,
-        replaceCLIncludes, replaceCOMPIncludes;
+        replaceCLIncludes, replaceCOMPIncludes, replaceSPVIncludes;
     for (auto& include : m_replaceIncludes) {
         replaceIncludes.push_back(include.first);
     }
     if (!findProjectFiles(replaceIncludes, replaceCIncludes, replaceCPPIncludes, replaceASMIncludes, m_includesH,
-            m_includesRC, replaceCUIncludes, replaceCLIncludes, replaceCOMPIncludes)) {
+            m_includesRC, replaceCUIncludes, replaceCLIncludes, replaceCOMPIncludes, replaceSPVIncludes)) {
         return false;
     }
     // Need to create local files for any replace objects
@@ -143,6 +143,9 @@ bool ProjectGenerator::checkProjectFiles()
         return false;
     }
     if (!createReplaceFiles(replaceCOMPIncludes, m_includesCOMP, m_includesConditionalCOMP)) {
+        return false;
+    }
+    if (!createReplaceFiles(replaceSPVIncludes, m_includesSPV, m_includesConditionalSPV)) {
         return false;
     }
     return true;
@@ -265,7 +268,7 @@ bool ProjectGenerator::createReplaceFiles(
 
 bool ProjectGenerator::findProjectFiles(const StaticList& includes, StaticList& includesC, StaticList& includesCPP,
     StaticList& includesASM, StaticList& includesH, StaticList& includesRC, StaticList& includesCU,
-    StaticList& includesCL, StaticList& includesCOMP) const
+    StaticList& includesCL, StaticList& includesCOMP, StaticList& includesSPV) const
 {
     for (const auto& include : includes) {
         string retFileName;
@@ -329,6 +332,20 @@ bool ProjectGenerator::findProjectFiles(const StaticList& includes, StaticList& 
                 continue;
             }
             includesCL.push_back(retFileName);
+        } else if (include.find(".comp.spv") != string::npos) {
+            // Found a compile-time SPIR-V file (from .comp.glsl source)
+            string fileName = include.substr(0, include.find(".comp.spv"));
+            if (findSourceFile(fileName, ".comp.glsl", retFileName)) {
+                m_configHelper.makeFileProjectRelative(retFileName, retFileName);
+                if (find(includesSPV.begin(), includesSPV.end(), retFileName) != includesSPV.end()) {
+                    // skip this item
+                    continue;
+                }
+                includesSPV.push_back(retFileName);
+            } else {
+                outputError("Could not find compile-time SPIR-V source file for object (" + include + ")");
+                return false;
+            }
         } else if (findSourceFile(include, ".comp", retFileName)) {
             // Found a compute shader file to include
             m_configHelper.makeFileProjectRelative(retFileName, retFileName);

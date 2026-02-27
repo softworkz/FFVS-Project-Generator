@@ -47,6 +47,9 @@
 #define SPIRV_SOURCE2C_PROPS_ID 121
 #define SPIRV_SOURCE2C_TARGETS_ID 122
 #define SPIRV_SOURCE2C_XML_ID 123
+#define SPIRV_COMPILE_PROPS_ID 124
+#define SPIRV_COMPILE_TARGETS_ID 125
+#define SPIRV_COMPILE_XML_ID 126
 
 bool ProjectGenerator::passAllMake()
 {
@@ -393,6 +396,10 @@ bool ProjectGenerator::outputProject()
     outputSPIRVTools(projectFile);
     outputSPIRVTools(projectFileWinRT);
 
+    // Add compile-time SPIR-V requirements
+    outputSPIRVCompileTools(projectFile);
+    outputSPIRVCompileTools(projectFileWinRT);
+
     // Add the dependency libraries
     if (!outputDependencyLibs(projectFile, false, false)) {
         return false;
@@ -549,11 +556,13 @@ void ProjectGenerator::outputProjectCleanup()
     m_includesConditionalCU.clear();
     m_includesConditionalCL.clear();
     m_includesConditionalCOMP.clear();
+    m_includesConditionalSPV.clear();
     m_includesH.clear();
     m_includesRC.clear();
     m_includesCU.clear();
     m_includesCL.clear();
     m_includesCOMP.clear();
+    m_includesSPV.clear();
     m_libs.clear();
     m_unknowns.clear();
     m_projectDir.clear();
@@ -1221,6 +1230,20 @@ void ProjectGenerator::outputSourceFiles(string& projectTemplate, string& filter
             }
         } else {
             outputError("SPIRV shader files found in project but spirv is disabled");
+        }
+    }
+
+    // Output compile-time SPIR-V (.comp.glsl) files
+    if (!m_includesSPV.empty()) {
+        outputSourceFileType(
+            m_includesSPV, "SPIRVCompile", "Source", projectTemplate, filterTemplate, foundObjects, foundFilters,
+            false);
+        for (auto& i : m_includesConditionalSPV) {
+            fileList.clear();
+            fileList.emplace_back(i.first);
+            outputSourceFileType(fileList, "SPIRVCompile", "Source", projectTemplate, filterTemplate,
+                foundObjects, foundFilters, false, i.second.isStatic, i.second.isShared, i.second.is32,
+                i.second.is64);
         }
     }
 
@@ -2221,6 +2244,84 @@ void ProjectGenerator::outputSPIRVTools(string& projectTemplate) const
         findPos = projectTemplate.rfind(findTargets) + findTargets.length();
         projectTemplate.insert(findPos, targetsSPIRV);
     }
+}
+
+void ProjectGenerator::outputSPIRVCompileTools(string& projectTemplate) const
+{
+    if (m_includesSPV.empty()) {
+        return;
+    }
+
+    // Copy bin2c.exe to project directory (may already exist from CUDA)
+    string bin2cPath = m_configHelper.m_solutionDirectory + "bin2c.exe";
+    string bin2cCheck;
+    if (!findFile(bin2cPath, bin2cCheck)) {
+        string bin2cContent;
+        if (!loadFromResourceFile(BIN2C_EXE_ID, bin2cContent)) {
+            outputError("Failed to load bin2c.exe from resources");
+            return;
+        }
+        if (!writeToFile(bin2cPath, bin2cContent, true)) {
+            outputError("Failed to copy bin2c.exe to project directory");
+            return;
+        }
+    }
+
+    // Copy spirv_compile.props to project directory
+    string propsContent;
+    if (!loadFromResourceFile(SPIRV_COMPILE_PROPS_ID, propsContent)) {
+        outputError("Failed to load spirv_compile.props from resources");
+        return;
+    }
+    string propsPath = m_configHelper.m_solutionDirectory + "spirv_compile.props";
+    if (!writeToFile(propsPath, propsContent, true)) {
+        outputError("Failed to copy spirv_compile.props to project directory");
+        return;
+    }
+
+    // Copy spirv_compile.targets to project directory
+    string targetsContent;
+    if (!loadFromResourceFile(SPIRV_COMPILE_TARGETS_ID, targetsContent)) {
+        outputError("Failed to load spirv_compile.targets from resources");
+        return;
+    }
+    string targetsPath = m_configHelper.m_solutionDirectory + "spirv_compile.targets";
+    if (!writeToFile(targetsPath, targetsContent, true)) {
+        outputError("Failed to copy spirv_compile.targets to project directory");
+        return;
+    }
+
+    // Copy spirv_compile.xml to project directory
+    string xmlContent;
+    if (!loadFromResourceFile(SPIRV_COMPILE_XML_ID, xmlContent)) {
+        outputError("Failed to load spirv_compile.xml from resources");
+        return;
+    }
+    string xmlPath = m_configHelper.m_solutionDirectory + "spirv_compile.xml";
+    if (!writeToFile(xmlPath, xmlContent, true)) {
+        outputError("Failed to copy spirv_compile.xml to project directory");
+        return;
+    }
+
+    // Add SPIRV compile build customisation imports
+    string propsSPIRV = "\r\n\
+  <ImportGroup Label=\"ExtensionSettings\">\r\n\
+    <Import Project=\"spirv_compile.props\" />\r\n\
+  </ImportGroup>";
+    string targetsSPIRV = "\r\n\
+  <ImportGroup Label=\"ExtensionTargets\">\r\n\
+    <Import Project=\"spirv_compile.targets\" />\r\n\
+  </ImportGroup>";
+
+    const string findProps = R"(</ImportGroup>)";
+    const string findTargets = R"(</ItemDefinitionGroup>)";
+
+    // Add spirv compile props import (after first </ImportGroup>)
+    uint findPos = projectTemplate.find(findProps) + findProps.length();
+    projectTemplate.insert(findPos, propsSPIRV);
+    // Add spirv compile targets import (after last </ItemDefinitionGroup>)
+    findPos = projectTemplate.rfind(findTargets) + findTargets.length();
+    projectTemplate.insert(findPos, targetsSPIRV);
 }
 
 bool ProjectGenerator::outputDependencyLibs(string& projectTemplate, const bool winrt, const bool program)

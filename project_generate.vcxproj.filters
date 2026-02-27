@@ -63,14 +63,36 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin2c.exe" />
-    <None Include="source2c.exe" />
-    <None Include="opencl_source2c.props" />
-    <None Include="opencl_source2c.targets" />
-    <None Include="opencl_source2c.xml" />
-    <None Include="cuda_bin2c.props" />
-    <None Include="cuda_bin2c.targets" />
-    <None Include="cuda_bin2c.xml" /> 
     <None Include="templates\smp_common.props" />
+    <None Include="resources\bin2c.exe" />
+    <None Include="resources\cuda_bin2c.props" />
+    <None Include="resources\cuda_bin2c.targets" />
+    <None Include="resources\opencl_source2c.props" />
+    <None Include="resources\opencl_source2c.targets" />
+    <None Include="resources\source2c.exe" />
+    <None Include="resources\spirv_source2c.props" />
+    <None Include="resources\spirv_source2c.targets" />
+    <None Include="templates\smp_deps.props" />
+    <None Include="templates\smp_winrt_deps.props" />
+    <None Include="templates\templateprogram_in.vcxproj" />
+    <None Include="templates\templateprogram_in.vcxproj.filters" />
+    <None Include="templates\template_files.props" />
+    <None Include="templates\template_in.sln" />
+    <None Include="templates\template_in.vcxproj" />
+    <None Include="templates\template_in.vcxproj.filters" />
+    <None Include="templates\template_in_winrt.sln" />
+    <None Include="templates\template_in_winrt.vcxproj" />
+    <None Include="templates\template_with_latest_sdk.bat">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="resources\spirv_compile.props" />
+    <None Include="resources\spirv_compile.targets" />
+    <None Include=".github\copilot-instructions.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="resources\cuda_bin2c.xml" />
+    <Xml Include="resources\opencl_source2c.xml" />
+    <Xml Include="resources\spirv_source2c.xml" />
+    <Xml Include="resources\spirv_compile.xml" />
   </ItemGroup>
 </Project>

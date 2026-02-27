@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)$(MSBuildThisFileName).xml" />
+    <AvailableItemName Include="SPIRVCompile">
+      <Targets>SelectSPIRVCompile</Targets>
+    </AvailableItemName>
+  </ItemGroup>
+
+  <Target Name="InitSPIRVCompileTool" BeforeTargets="SelectSPIRVCompile">
+    <Exec Command="&quot;$(VULKAN_SDK)\Bin\glslangValidator.exe&quot; -v" IgnoreExitCode="true" Condition="'$(SPIRV_GLSLC)'=='' and '$(VULKAN_SDK)'!=''">
+      <Output TaskParameter="ExitCode" PropertyName="SPIRV_GLSLANG_SDK_EXIT" />
+    </Exec>
+    <PropertyGroup Condition="'$(SPIRV_GLSLC)'=='' and '$(SPIRV_GLSLANG_SDK_EXIT)'=='0'">
+      <SPIRV_GLSLC>$(VULKAN_SDK)\Bin\glslangValidator.exe</SPIRV_GLSLC>
+      <SPIRV_GLSLCFLAGS>-V --target-env spirv1.6 --glsl-version 460</SPIRV_GLSLCFLAGS>
+    </PropertyGroup>
+
+    <Exec Command="&quot;$(VULKAN_SDK)\Bin\glslc.exe&quot; --version" IgnoreExitCode="true" Condition="'$(SPIRV_GLSLC)'=='' and '$(VULKAN_SDK)'!=''">
+      <Output TaskParameter="ExitCode" PropertyName="SPIRV_GLSLC_SDK_EXIT" />
+    </Exec>
+    <PropertyGroup Condition="'$(SPIRV_GLSLC)'=='' and '$(SPIRV_GLSLC_SDK_EXIT)'=='0'">
+      <SPIRV_GLSLC>$(VULKAN_SDK)\Bin\glslc.exe</SPIRV_GLSLC>
+      <SPIRV_GLSLCFLAGS>--target-env=vulkan1.4 --target-spv=spv1.6 -std=460</SPIRV_GLSLCFLAGS>
+    </PropertyGroup>
+
+    <Exec Command="glslangValidator -v" IgnoreExitCode="true" Condition="'$(SPIRV_GLSLC)'==''">
+      <Output TaskParameter="ExitCode" PropertyName="SPIRV_GLSLANG_PATH_EXIT" />
+    </Exec>
+    <PropertyGroup Condition="'$(SPIRV_GLSLC)'=='' and '$(SPIRV_GLSLANG_PATH_EXIT)'=='0'">
+      <SPIRV_GLSLC>glslangValidator</SPIRV_GLSLC>
+      <SPIRV_GLSLCFLAGS>-V --target-env spirv1.6 --glsl-version 460</SPIRV_GLSLCFLAGS>
+    </PropertyGroup>
+
+    <Exec Command="glslc --version" IgnoreExitCode="true" Condition="'$(SPIRV_GLSLC)'==''">
+      <Output TaskParameter="ExitCode" PropertyName="SPIRV_GLSLC_PATH_EXIT" />
+    </Exec>
+    <PropertyGroup Condition="'$(SPIRV_GLSLC)'=='' and '$(SPIRV_GLSLC_PATH_EXIT)'=='0'">
+      <SPIRV_GLSLC>glslc</SPIRV_GLSLC>
+      <SPIRV_GLSLCFLAGS>--target-env=vulkan1.4 --target-spv=spv1.6 -std=460</SPIRV_GLSLCFLAGS>
+    </PropertyGroup>
+
+    <Error Condition="'$(SPIRV_GLSLC)'==''" Text="Failed to detect SPIR-V compiler (tried glslangValidator, glslc, and Vulkan SDK binaries)." />
+  </Target>
+
+  <Target Name="SelectSPIRVCompile" BeforeTargets="SelectCustomBuild;ComputeCustomBuildOutput">
+
+    <ItemGroup>
+      <SPIRVCompile Update="@(SPIRVCompile)">
+        <Inputs>%(SPIRVCompile.FullPath)</Inputs>
+        <AdditionalInputs>%(SPIRVCompile.AdditionalInputs);$(MSBuildProjectFile)</AdditionalInputs>
+        <Command>"$(SPIRV_GLSLC)" $(SPIRV_GLSLCFLAGS) -o "$(IntDir)%(Filename).spv" "%(FullPath)" &amp;&amp; "$(ProjectDir)bin2c.exe" "$(IntDir)%(Filename).spv" "%(SPIRVCompile.Outputs)" $([System.String]::Copy('%(Filename)').Replace('.','_'))_spv</Command>
+
+        <Message>Exec SPIRVCompile: %(SPIRVCompile.FileName)</Message>
+      </SPIRVCompile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <CustomBuild Include="@(SPIRVCompile)">
+      </CustomBuild>
+    </ItemGroup>
+  </Target>
+</Project>

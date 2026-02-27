@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemDefinitionGroup>
+    <SPIRVCompile>
+      <Outputs>$(IntDir)%(Filename).spv.c</Outputs>
+      <TreatOutputAsContent>false</TreatOutputAsContent>
+      <TrackerLogDirectory>$(TLogLocation)</TrackerLogDirectory>
+      <MinimalRebuildFromTracking>true</MinimalRebuildFromTracking>
+      <VerifyInputsAndOutputsExist>true</VerifyInputsAndOutputsExist>
+
+      <LinkObjects     Condition="'%(SPIRVCompile.LinkObjects)'     == ''">true</LinkObjects>
+      <OutputItemType  Condition="'%(SPIRVCompile.OutputItemType)'  == ''">ClCompile</OutputItemType>
+      <BuildInParallel Condition="'%(SPIRVCompile.BuildInParallel)' == ''">true</BuildInParallel>
+      <MaxProcesses    Condition="'%(SPIRVCompile.MaxProcesses)'    == ''">0</MaxProcesses>
+      <MaxItemsInBatch Condition="'%(SPIRVCompile.MaxItemsInBatch)' == ''">1</MaxItemsInBatch>
+      <Command         Condition="'%(SPIRVCompile.Command)'         == ''">"$(SPIRV_GLSLC)" $(SPIRV_GLSLCFLAGS) -o "$(IntDir)%(Filename).spv" "%(FullPath)" &amp;&amp; "$(ProjectDir)bin2c.exe" "$(IntDir)%(Filename).spv" "%(Outputs)" $([System.String]::Copy('%(Filename)').Replace('.','_'))_spv</Command>
+    </SPIRVCompile>
+  </ItemDefinitionGroup>
+</Project>
