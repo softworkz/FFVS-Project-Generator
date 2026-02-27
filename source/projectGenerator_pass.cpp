@@ -127,6 +127,123 @@ bool ProjectGenerator::passDynamicIncludeObject(uint& startPos, uint& endPos, st
 {
     // Check if this is a valid File or a past compile option
     if (m_inLine.at(startPos) == '$') {
+        // Check for $(if ...) Make function
+        if (m_inLine.length() > startPos + 5 && m_inLine.compare(startPos + 2, 3, "if ") == 0) {
+            // Handle $(if condition, then-part[, else-part])
+            // Find the matching outer closing parenthesis by counting nesting
+            uint depth = 1;
+            uint outerEnd = startPos + 2;
+            while (outerEnd < m_inLine.length()) {
+                if (m_inLine[outerEnd] == '(') {
+                    ++depth;
+                } else if (m_inLine[outerEnd] == ')') {
+                    --depth;
+                    if (depth == 0) {
+                        break;
+                    }
+                }
+                ++outerEnd;
+            }
+            // Extract and evaluate the condition variable from $(COND) or $(!COND)
+            const uint condStart = m_inLine.find("$(", startPos + 5);
+            if (condStart != string::npos && condStart < outerEnd) {
+                const uint condEnd = m_inLine.find(')', condStart + 2);
+                if (condEnd != string::npos && condEnd < outerEnd) {
+                    string condVar = m_inLine.substr(condStart + 2, condEnd - condStart - 2);
+                    bool negated = false;
+                    if (!condVar.empty() && condVar[0] == '!') {
+                        negated = true;
+                        condVar = condVar.substr(1);
+                    }
+                    bool condTrue = false;
+                    const auto condOption = m_configHelper.getConfigOptionPrefixed(condVar);
+                    if (condOption != m_configHelper.m_configValues.end()) {
+                        condTrue = (condOption->m_value == "1");
+                    }
+                    if (negated) {
+                        condTrue = !condTrue;
+                    }
+                    // Parse comma-separated parts after the condition (handling nested parens)
+                    // Format after condEnd: ",then-part[,else-part]"
+                    const string afterCond = m_inLine.substr(condEnd + 1, outerEnd - condEnd - 1);
+                    vector<string> parts;
+                    string current;
+                    uint nest = 0;
+                    for (const char c : afterCond) {
+                        if (c == '(') {
+                            ++nest;
+                            current += c;
+                        } else if (c == ')') {
+                            if (nest > 0) --nest;
+                            current += c;
+                        } else if (c == ',' && nest == 0) {
+                            parts.push_back(current);
+                            current.clear();
+                        } else {
+                            current += c;
+                        }
+                    }
+                    if (!current.empty()) {
+                        parts.push_back(current);
+                    }
+                    // parts[0] is empty (before first comma), parts[1] is then-part, parts[2] is else-part
+                    string selectedPart;
+                    if (condTrue && parts.size() > 1) {
+                        selectedPart = parts[1];
+                    } else if (!condTrue && parts.size() > 2) {
+                        selectedPart = parts[2];
+                    }
+                    // Process each file in the selected part
+                    if (!selectedPart.empty()) {
+                        string compare = "1";
+                        string identCheck = ident;
+                        if (!identCheck.empty() && identCheck.at(0) == '!') {
+                            identCheck = identCheck.substr(1);
+                            compare = "0";
+                        }
+                        uint fPos = selectedPart.find_first_not_of(" \t");
+                        while (fPos != string::npos) {
+                            const uint fEnd = selectedPart.find_first_of(" \t\\", fPos);
+                            string file = selectedPart.substr(fPos, (fEnd != string::npos) ? fEnd - fPos : string::npos);
+                            // Strip ./ or ../ prefix
+                            const uint stripPos = file.find_first_not_of(".\\/");
+                            if (stripPos != string::npos && stripPos > 0) {
+                                file = file.substr(stripPos);
+                            }
+                            // Find extension and create tag
+                            const uint extPos = file.rfind('.');
+                            if (extPos != string::npos) {
+                                file = file.substr(0, extPos);
+                            }
+                            if (!file.empty() && find(includes.begin(), includes.end(), file) == includes.end()) {
+                                const auto option = m_configHelper.getConfigOptionPrefixed(identCheck);
+                                if (option == m_configHelper.m_configValues.end()) {
+                                    outputInfo("Unknown dynamic configuration option (" + identCheck +
+                                        ") used when passing object (" + file + ")");
+                                } else if (option->m_value == compare ||
+                                    m_configHelper.m_replaceList.find(identCheck) !=
+                                        m_configHelper.m_replaceList.end()) {
+                                    if (m_configHelper.m_replaceList.find(identCheck) !=
+                                        m_configHelper.m_replaceList.end()) {
+                                        m_replaceIncludes[file].push_back(
+                                            compare == "1" ? identCheck : "!" + identCheck);
+                                        outputInfo(
+                                            "Found Dynamic Replace (if): '" + file + "', '" + identCheck + "'");
+                                    } else {
+                                        includes.push_back(file);
+                                        outputInfo("Found Dynamic (if): '" + file + "', '" + identCheck + "'");
+                                    }
+                                }
+                            }
+                            fPos = (fEnd != string::npos) ? selectedPart.find_first_not_of(" \t\\", fEnd)
+                                                          : string::npos;
+                        }
+                    }
+                }
+            }
+            endPos = outerEnd;
+            return true;
+        }
         endPos = m_inLine.find(')', startPos);
         const string dynInc = m_inLine.substr(startPos + 2, endPos - startPos - 2);
         // Find it in the unknown list
