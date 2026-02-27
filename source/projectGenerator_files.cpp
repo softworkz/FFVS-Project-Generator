@@ -38,6 +38,13 @@ bool ProjectGenerator::findSourceFile(const string& file, const string& extensio
             // Check if this file already includes the project folder in its name
             if (file.find(projectName) != string::npos) {
                 retFileName = m_projectDir + file.substr(file.find(projectName) + projectName.length()) + extension;
+                if (findFile(retFileName, fileName)) {
+                    return true;
+                }
+            }
+            // Check if this file exists relative to the root source directory
+            if (m_projectDir != m_configHelper.m_rootDirectory) {
+                retFileName = m_configHelper.m_rootDirectory + file + extension;
                 return findFile(retFileName, fileName);
             }
             return false;
