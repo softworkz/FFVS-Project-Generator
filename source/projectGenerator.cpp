@@ -54,7 +54,7 @@
 bool ProjectGenerator::passAllMake()
 {
     // Check for stale files left by running configure in the source directory
-    const string staleFiles[] = {"config.h", "config.asm", "config_components.h"};
+    const string staleFiles[] = {"config.h", "config.asm", "config_components.h", "config_components.asm"};
     string found;
     for (const auto& file : staleFiles) {
         if (findFile(m_configHelper.m_rootDirectory + file, found)) {

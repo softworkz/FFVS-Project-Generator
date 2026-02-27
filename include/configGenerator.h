@@ -60,6 +60,7 @@ private:
     ValuesList m_fixedConfigValues;
     ValuesList m_configValues;
     uint m_configComponentsStart{0};
+    bool m_hasConfigComponentsASM{false};
     uint m_configValuesEnd{0};
     string m_configureFile;
     bool m_isLibav{false};

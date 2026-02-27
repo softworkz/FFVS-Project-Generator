@@ -110,6 +110,9 @@ bool ConfigGenerator::passConfigureFile()
         }
     }
 
+    // Detect whether this FFmpeg configure has dedicated config_components.asm generation
+    m_hasConfigComponentsASM = (m_configureFile.find("config_components.asm") != string::npos);
+
     // Search for start of config.h file parameters
     uint startPos = m_configureFile.find("#define FFMPEG_CONFIG_H");
     if (startPos == string::npos) {
@@ -935,6 +938,27 @@ bool ConfigGenerator::outputConfig()
             outputError("Failed opening output configure file (" + configFile + ")");
             return false;
         }
+
+        if (m_hasConfigComponentsASM) {
+            // Output config_components.asm (newer FFmpeg)
+            outputLine("  Outputting config_components.asm...");
+            string componentsFileASM = header2 + '\n';
+            for (auto i = m_configValues.begin() + m_configComponentsStart;
+                 i < m_configValues.begin() + m_configValuesEnd;
+                 ++i) {
+                string sTagName = i->m_prefix + i->m_option;
+                if ((i->m_value != "0") && (m_replaceListASM.find(sTagName) != m_replaceListASM.end())) {
+                    componentsFileASM += m_replaceListASM[sTagName] + '\n';
+                } else {
+                    componentsFileASM += "%define " + sTagName + ' ' + i->m_value + '\n';
+                }
+            }
+            configFile = m_solutionDirectory + "config_components.asm";
+            if (!writeToFile(configFile, componentsFileASM)) {
+                outputError("Failed opening output asm configure file (" + configFile + ")");
+                return false;
+            }
+        }
     }
 
     // Output avconfig.h
@@ -1028,6 +1052,8 @@ void ConfigGenerator::deleteCreatedFiles() const
         vector<string> existingFiles;
         findFiles(m_solutionDirectory + "config.h", existingFiles, false);
         findFiles(m_solutionDirectory + "config.asm", existingFiles, false);
+        findFiles(m_solutionDirectory + "config_components.h", existingFiles, false);
+        findFiles(m_solutionDirectory + "config_components.asm", existingFiles, false);
         findFiles(m_solutionDirectory + "libavutil/avconfig.h", existingFiles, false);
         findFiles(m_solutionDirectory + "libavutil/ffversion.h", existingFiles, false);
         for (const auto& i : existingFiles) {
