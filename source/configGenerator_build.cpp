@@ -438,7 +438,7 @@ bool ConfigGenerator::buildAutoDetectValues()
                         makeFileGeneratorRelative(m_outDirectory + "include/shaderc/shaderc.h", sFileName);
                         enable = findFile(sFileName, sFileName);
                     }
-                } else if (i == "spirv_compiler") {
+                } else if (i == "spirv_compiler" || i == "spirv_library") {
                     enable = isConfigOptionEnabled("libshaderc") || isConfigOptionEnabled("libglslang");
                 } else if (i == "libplacebo") {
                     makeFileGeneratorRelative(m_outDirectory + "include/libplacebo/config.h", sFileName);
@@ -1156,6 +1156,11 @@ void ConfigGenerator::buildAdditionalDependencies(DependencyList& additionalDepe
     const auto spirv = getConfigOption("spirv_compiler");
     if ((spirv == m_configValues.end())) {
         additionalDependencies["spirv_compiler"] =
+            isConfigOptionEnabled("libshaderc") || isConfigOptionEnabled("libglslang");
+    }
+    const auto spirv2 = getConfigOption("spirv_library");
+    if ((spirv == m_configValues.end())) {
+        additionalDependencies["spirv_library"] =
             isConfigOptionEnabled("libshaderc") || isConfigOptionEnabled("libglslang");
     }
 }

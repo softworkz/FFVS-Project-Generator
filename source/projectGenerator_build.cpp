@@ -213,7 +213,7 @@ void ProjectGenerator::buildDependencies(StaticList& libs, StaticList& addLibs, 
                 // Doesn't need any additional libs
             } else if (i == "libshaderc") {
                 // Handled separately in outputDependencyLibs (different static/DLL lib names)
-            } else if (i == "spirv_compiler") {
+            } else if (i == "spirv_compiler" || i == "spirv_library") {
                 // Meta-dependency satisfied by libshaderc or libglslang, no additional libs needed
             } else if (i == "libplacebo") {
                 lib = "libplacebo";
@@ -593,6 +593,7 @@ void ProjectGenerator::buildProjectDependencies(map<string, bool>& projectDeps) 
     projectDeps["libshaderc"] = (m_projectName == "libavfilter");
     projectDeps["libplacebo"] = (m_projectName == "libavfilter");
     projectDeps["spirv_compiler"] = (m_projectName == "libavfilter");
+    projectDeps["spirv_library"] = (m_projectName == "libavfilter");
     projectDeps["lzma"] = (m_projectName == "libavcodec");
     projectDeps["mediafoundation"] = (m_projectName == "libavcodec");
     projectDeps["nvdec"] = (m_projectName == "libavcodec");
