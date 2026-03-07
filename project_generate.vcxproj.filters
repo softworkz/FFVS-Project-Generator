@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Templates">
+      <UniqueIdentifier>{56f31a40-59c7-472b-a022-551597333dd4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\configGenerator.h">
@@ -61,5 +64,19 @@
     <ResourceCompile Include="source\Templates.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="templates\smp_deps.props">
+      <Filter>Templates</Filter>
+    </None>
+    <None Include="templates\smp_winrt_deps.props">
+      <Filter>Templates</Filter>
+    </None>
+    <None Include="templates\template_files.props">
+      <Filter>Templates</Filter>
+    </None>
+    <None Include="templates\template_with_latest_sdk.bat">
+      <Filter>Templates</Filter>
+    </None>
   </ItemGroup>
 </Project>
