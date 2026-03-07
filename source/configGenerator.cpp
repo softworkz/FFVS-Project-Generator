@@ -1433,7 +1433,7 @@ bool ConfigGenerator::passFindFiltersExtern(const string& param1, vector<string>
     // s/^extern AVFilter ff_([avfsinkrc]{2,5})_([a-zA-Z0-9_]+);/\2_filter/p
     // Changed in 4.4+ to:
     // s/^extern const AVFilter ff_[avfsinkrc]\{2,5\}_\([[:alnum:]_]\{1,\}\);/\1_filter/p
-    // Changed in 7.2+ to:
+    // Changed in 8.0+ to:
     // s/^extern const FFFilter ff_[avfsinkrc]\{2,5\}_\([[:alnum:]_]\{1,\}\);/\1_filter/p
     // Need to find and open the specified file
     const string file = m_rootDirectory + param1;

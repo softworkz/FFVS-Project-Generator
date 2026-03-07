@@ -14,6 +14,8 @@ libass, ^
 libbluray, ^
 libcdio, ^
 libcdio-paranoia, ^
+libdvdread, ^
+libdvdnav, ^
 libiconv, ^
 libgcrypt, ^
 libilbc, ^
