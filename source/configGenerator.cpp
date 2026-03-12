@@ -1709,6 +1709,10 @@ bool ConfigGenerator::passEnabledComponents(
         output += "    &ff_asink_abuffer,\n";
         output += "    &ff_vsink_buffer,\n";
     }
+    if (staticFilterList && (m_configureFile.find("ssrc_sbuffer") != string::npos)) {
+        output += "    &ff_ssrc_sbuffer,\n";
+        output += "    &ff_ssink_sbuffer,\n";
+    }
     output += "    NULL };";
 
     // Open output file
